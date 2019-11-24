@@ -6,21 +6,27 @@ nage-waza: ^^
 koshi = goshi
 harai = barai
 
-### arrière
+### ashi-waza
 
 o-soto-gari: grand-extérieur-fauchage
 ko-soto-gari: petit-^
 ko-soto-gake: ^-^-accrochage
 o-soto-guruma: ^^
-o-soto-otoshi: ^-^-renverser
+o-soto-otoshi: ^-^-renversement
 o-uchi-gari: ^-intérieur-^
 ko-uchi-gari: ^^
 ko-uchi-gake: ^^
 o-uchi-gake: ^^
 sasae-tsuri-komi-ashi: bloquer-en pechant-dedans/contre-
 okuri-ashi-barai: les deux-^-^
+ashi-guruma: ^^
+de-ashi-barai: avancer-jambe-balayage
+harai-tsuri-komi-ashi: ^^
+hiza-guruma: genou-enrouler
+uchi-mata: ^-cuisse
+tai-otoshi: corps-^
 
-### épaules
+### seoi-waza
 
 ippon-seoi-nage: par dessus-épaule-projection
 morote-seoi-nage: à deux main-épaule-projection
@@ -28,7 +34,7 @@ eri-seoi-nage: revers-épaule-projection
 kata-guruma: ^^
 kubi-nage: cou-^
 
-#### koshi-waza
+### koshi-waza
 
 o-goshi: ^-hanche
 koshi-guruma: ^^
@@ -40,21 +46,12 @@ o-guruma: ^^
 uki-goshi: flottante-^
 utsuri-goshi: en souvelant-^
 
-### main
+### té-waza
 
 te-guruma: main-^
 morote-gari: ^^
 ushiro-goshi: ^^
 sumi-otoshi: ^^
-
-### jambes
-
-ashi-guruma: ^^
-de-ashi-barai: avancer-jambe-balayage
-harai-tsuri-komi-ashi: ^^
-hiza-guruma: genou-enrouler
-uchi-mata: ^-cuisse
-tai-otoshi: corps-^
 
 ### sutemi-waza
 sutemi-waza: sacrifice-^
@@ -63,7 +60,7 @@ tomoe-nage: en cercle-^
 yoko-tomoe-nage: ^^
 sukui-nage: en cuillère-^
 ura-nage: retourner-^
-tani-otoshi: vallée-chute
+tani-otoshi: vallée-^
 sumi-gaeshi: en coin-renversement
 yoko-guruma: ^^
 yoko-otoshi: ^^
@@ -84,7 +81,7 @@ gesa-gatame: en travers-control
 kuzure-gesa-gatame: variante-^-^
 kata-gatame: épaule-^
 tate-shiho-gatame: longitudinal-^-^
-kami-shiho-gatame: en haut^^
+kami-shiho-gatame: en haut-^-^
 yoko-shiho-gatame: coté-^-^
 ushiro-gesa-gatame: en arrière-^-^
 makura-gesa-gatame: en oreiller-^-^
@@ -98,7 +95,7 @@ ude-gatame: bras-^
 ude-garami: ^-plié
 ashi-gatame: ^^
 hara-gatame: vente-^
-waki-gatame: aiselle-^
+waki-gatame: aisselle-^
 hiza-gatame: ^^
 
 ### shime-waza:
@@ -107,7 +104,7 @@ shime = jime
 shime-waza: strangulation-technique
 
 kata-juji-jime: ^^
-gyaku-juji-jime: ^^
+gyaku-juji-jime: inversé-^-^
 hadaka-jime: nu-^
 kata-ha-jime: ^-un seul-^
 sankaku-jime: en triangle-^
@@ -189,7 +186,7 @@ tai-sabaki: ^-entier
 # autre
 
 @uchi: maison
-@tekubi: 'cou' de la main
+@tekubi: cou (kubi) de la main
 @kote: petite main
 @uke: comme tori et uke?
 @mikasuki: de lune
