@@ -46,7 +46,7 @@ o-guruma: ^^
 uki-goshi: flottante-^
 utsuri-goshi: en souvelant-^
 
-### té-waza
+### te-waza
 
 te-guruma: main-^
 morote-gari: ^^
@@ -74,10 +74,12 @@ ne-waza: couché-technique
 
 ### osae-komi-waza
 osae-komi-waza: immobilisation-^-^
+katame-waza: ^^
 
 katame = gatame
+kesa = gesa
 
-gesa-gatame: en travers-control
+kesa-gatame: en travers-control
 kuzure-gesa-gatame: variante-^-^
 kata-gatame: épaule-^
 tate-shiho-gatame: longitudinal-^-^
@@ -98,7 +100,7 @@ hara-gatame: vente-^
 waki-gatame: aisselle-^
 hiza-gatame: ^^
 
-### shime-waza:
+### shime-waza
 
 shime = jime
 shime-waza: strangulation-technique
@@ -155,7 +157,7 @@ kakato-geri: talon-^
 ## nage-waza
 
 ## ne-waza
-### arm-locks
+### kantetsu-waza
 
 mune-gatame: poitrine-^
 ude-nobashi: ^-étendu

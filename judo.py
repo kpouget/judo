@@ -16,6 +16,8 @@ group_for_technique = {}
 
 name_to_comments = defaultdict(set)
 
+names_renamed = {}
+
 def translate(word):
     if not jp_fr[word]: return "?"
 
@@ -54,6 +56,9 @@ def parse_file(fname):
             if jp_fr[a] or jp_fr[b]:
                 print(f"ERROR: '{a}' ou '{b}' utilisé avant ligne {no}")
             jp_fr[a] = jp_fr[b]
+            name_to_technique[a] = name_to_technique[b]
+            name_to_comments[b].add("ou "+a)
+            names_renamed[a] = b
             continue
 
         # eg:
@@ -92,7 +97,7 @@ def parse_file(fname):
             fr.remove("^")
 
     global longest_tech_name, longest_fr_tech_name
-    
+
     longest_tech_name = max(map(len, map("-".join, techniques_transation.keys())))
 
     for tech in techniques_transation:
@@ -104,7 +109,7 @@ def parse_file(fname):
     longest_fr_tech_name = max(map(len, techniques_transation.values()))
 
 def print_as_text():
-    for jp, techniques in name_to_technique.items():
+    for jp, techniques in sorted(name_to_technique.items()):
         name = [jp]
         if not translate(jp).startswith("!"):
             name += ["<" + translate(jp) + ">"]
@@ -112,8 +117,13 @@ def print_as_text():
             name += ["("+";".join(name_to_comments[jp])+")"]
         name += ":"
 
+        if jp in names_renamed:
+            print(" ".join(name+["Voir", names_renamed[jp]]))
+            print()
+            continue
+
         first = True
-        for technique in techniques:
+        for technique in sorted(techniques):
             if len(sys.argv) == 2 and sys.argv[1] != group_for_technique[technique][0]: continue
             if first:
                 print(" ".join(name))
@@ -131,11 +141,25 @@ def print_as_text():
 def print_missing():
     missing = [jp for jp, fr in jp_fr.items() if not fr or "?" in fr]
     if not missing: return
-    
+
     print(f"{len(missing)} traductions manquantes:")
     for jp in missing:
         print(f"\t - {jp} ({','.join(name_to_technique[jp])})")
-          
+
+def tech_to_glossary(technique):
+    section = '/'.join(group_for_technique[technique])
+    tech_name = technique.replace("`", "")
+
+    tech_fr = translate_tech(technique).replace('-', ' | ')
+    if tech_fr.startswith("!"): tech_fr = tech_fr[1:]
+
+    return tech_name, section, tech_fr
+
+def jp_to_desc(jp):
+    tr = "<" + translate(jp) + ">" if not translate(jp).startswith("!") else ""
+    comment = "("+";".join(name_to_comments[jp])+")" if name_to_comments[jp] else ""
+    return comment, tr
+
 def print_as_latext():
     import pylatex
     dest = sys.argv[1] if len(sys.argv) == 2 else 'judo'
@@ -146,40 +170,102 @@ def print_as_latext():
 
     with doc.create(pylatex.Center()) as centered:
         centered.append(pylatex.utils.bold(f'Glossaire de {dest.capitalize()}'))
-    
+
     with doc.create(pylatex.LongTable('rlll')) as table:
         for jp, techniques in sorted(name_to_technique.items()):
-            name = [jp]
-            
-            tr = "<" + translate(jp) + ">" if not translate(jp).startswith("!") else ""
-            comment = "("+";".join(name_to_comments[jp])+")" if name_to_comments[jp] else ""
+            comment, tr = jp_to_desc(jp)
 
             def do_first():
                 table.add_empty_row()
-                table.add_row((pylatex.MultiColumn(3, align='l', data=[pylatex.utils.bold(jp.replace("`", "") +" "+ tr), pylatex.NoEscape("~"), comment]), ""))
-                
+                table.add_row((pylatex.MultiColumn(3, align='l', data=[pylatex.utils.bold(jp.replace("`", "") +" "+ tr),
+                                                                       pylatex.NoEscape("~"), comment]), ""))
+
+            if jp in names_renamed:
+                comment = "voir "+ names_renamed[jp]+"."
+                do_first()
+                continue
+
             first = True
-            for technique in techniques:
+            for technique in sorted(techniques):
                 if len(sys.argv) == 2 and sys.argv[1] != group_for_technique[technique][0]: continue
                 if first:
                     do_first()
                     first = False
 
-                section = '/'.join(group_for_technique[technique])
+                tech_name, section, tech_fr = tech_to_glossary(technique)
+
                 if len(sys.argv) == 2:
                     section = section.partition("/")[-1]
 
-                tech_fr = translate_tech(technique).replace('-', ' | ')
-                if tech_fr.startswith("!"): tech_fr = tech_fr[1:]
+                table.add_row(("", tech_name, tech_fr, section))
 
-                table.add_row(("", technique.replace("`", ""), tech_fr, section))
-        
     doc.generate_pdf(dest, clean_tex=False)
-    
+
+def run_dash():
+    import dash
+    from dash.dependencies import Output, Input, State
+    import dash_core_components as dcc
+    import dash_html_components as html
+
+    app = dash.Dash(__name__)
+
+    import dash_table
+    cols = ["Nom", "Traduction", "Domaine"]
+
+
+    name_search = dcc.Dropdown(
+        id='name-search', multi=True,
+        options=[{'label': name, 'value': name}
+                 for name in sorted(jp_fr)]
+    )
+
+    domain_search = dcc.Dropdown(
+        id='domain-dropdown',
+        options=[{'label': " > ".join(d), 'value': "/".join(d)} for d in sorted(techniques_by_group)]
+    )
+
+    app.layout = html.Div([
+        html.P([name_search, domain_search]),
+        dash_table.DataTable(
+        id='data-table',
+        columns=[{"name": i, "id": i} for i in cols],
+        data=[],
+        )])
+
+    @app.callback(
+        Output('data-table', 'data'),
+        [Input('name-search', "value"),
+         Input('domain-dropdown', "value")])
+    def update_table(names, domain):
+        if names is None: names = []
+
+        dicts = []
+        for name in names[:]:
+            try: names.append(names_renamed[name])
+            except KeyError: pass
+
+        for names_in_technique in sorted(techniques_transation):
+            if names and not [name for name in names if name in names_in_technique]:
+                continue
+
+            tech_name, section, tech_fr = tech_to_glossary("-".join(names_in_technique))
+            if domain and not section.startswith(domain): continue
+            dicts.append(dict(Nom=tech_name,
+                              Traduction=tech_fr,
+                              Domaine=section))
+        return dicts
+
+    if __name__ == "__main__":
+        app.run_server(debug=True)
+    else:
+        return app.application
+
 if __name__ == "__main__":
     parse_file("judo")
 
-    print_as_text()
-    print_missing()
-    print_as_latext()
-    
+    #print_as_text()
+    #print_missing()
+    #print_as_latext()
+    run_dash()
+else:
+    application = run_dash()
