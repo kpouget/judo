@@ -1,7 +1,7 @@
 #! /usr/bin/python3
 
 from collections import defaultdict
-import sys
+import sys, os
 
 current_section = []
 
@@ -160,16 +160,23 @@ def jp_to_desc(jp):
     comment = "("+";".join(name_to_comments[jp])+")" if name_to_comments[jp] else ""
     return comment, tr
 
-def print_as_latext():
+def print_as_latext(dest=None, section_filter=None):
     import pylatex
-    dest = sys.argv[1] if len(sys.argv) == 2 else 'judo'
+    if dest is None:
+        dest = sys.argv[1] if len(sys.argv) == 2 else 'judo'
+    if dest.endswith(".pdf"):
+        dest = dest[:-4]
+
+    if section_filter is None:
+        section_filter = sys.argv[1].replace('.', "/") if len(sys.argv) == 2 else 'judo'
+
     geometry_options = {"tmargin": "0.5cm", "lmargin": "1cm", "bmargin": "1.5cm"}
-    doc = pylatex.Document(geometry_options=geometry_options)
+    doc = pylatex.Document(geometry_options=geometry_options, document_options=['a4paper'])
     doc.preamble.append(pylatex.Command('title', ))
     doc.preamble.append(pylatex.Command('date', pylatex.NoEscape(r'')))
 
     with doc.create(pylatex.Center()) as centered:
-        centered.append(pylatex.utils.bold(f'Glossaire de {dest.capitalize()}'))
+        centered.append(pylatex.utils.bold(f'Glossaire de {section_filter if section_filter else "judo/jujutsu"}'))
 
     with doc.create(pylatex.LongTable('rlll')) as table:
         for jp, techniques in sorted(name_to_technique.items()):
@@ -187,19 +194,22 @@ def print_as_latext():
 
             first = True
             for technique in sorted(techniques):
-                if len(sys.argv) == 2 and sys.argv[1] != group_for_technique[technique][0]: continue
+                if section_filter and not "/".join(group_for_technique[technique]).startswith(section_filter): continue
+
                 if first:
                     do_first()
                     first = False
 
                 tech_name, section, tech_fr = tech_to_glossary(technique)
 
-                if len(sys.argv) == 2:
-                    section = section.partition("/")[-1]
+                if section_filter and section.startswith(section_filter):
+                    section = section[len(section_filter)+1:]
 
                 table.add_row(("", tech_name, tech_fr, section))
 
-    doc.generate_pdf(dest, clean_tex=False)
+    r1 = doc.generate_pdf(dest, clean_tex=True)
+    r2 = doc.generate_pdf(dest, clean_tex=False, clean=False)
+    r3 = doc.generate_pdf(dest, clean_tex=False, clean=False)
 
 def run_dash():
     import dash
@@ -207,33 +217,80 @@ def run_dash():
     import dash_core_components as dcc
     import dash_html_components as html
 
-    app = dash.Dash(__name__)
+    app = dash.Dash(__name__, requests_pathname_prefix='/judo/')
 
     import dash_table
     cols = ["Nom", "Traduction", "Domaine"]
 
-
     name_search = dcc.Dropdown(
+        placeholder="Mot japonais ...",
         id='name-search', multi=True,
-        options=[{'label': name, 'value': name}
-                 for name in sorted(jp_fr)]
+        options=[{'label': f"{jp} {jp_to_desc(jp)[1]}", 'value': jp}
+                 for jp, fr in sorted(jp_fr.items())]
     )
 
+    depth_2_domains = {d[:2] for d in techniques_by_group}
     domain_search = dcc.Dropdown(
+        placeholder="Discipline ...",
         id='domain-dropdown',
-        options=[{'label': " > ".join(d), 'value': "/".join(d)} for d in sorted(techniques_by_group)]
+        options=[{'label': "judo & jujutsu ", 'value': 'all'}] +
+                [{'label': " > ".join(d), 'value': "/".join(d)}
+                 for d in sorted(depth_2_domains)],
+        value='all'
     )
+
+    download_links = ["Télécharger: "]
+    for what in ("tout", "judo-jujutsu"), "judo", "jujutsu", "current":
+        if isinstance(what, tuple):
+            label = what[0]
+            link = what[1]
+        else: label = link = what
+        download_links += [" ", html.A(label, href=f"download/glossaire-{link}.pdf",
+                                       id=f"dl_{link}", target="_blank")]
 
     app.layout = html.Div([
         html.P([name_search, domain_search]),
+        html.P(download_links),
         dash_table.DataTable(
-        id='data-table',
-        columns=[{"name": i, "id": i} for i in cols],
-        data=[],
+            sort_action="native",
+            style_cell_conditional=[
+                {'if': {'column_id': 'Domaine'}, 'textAlign': 'left'},
+                {'if': {'column_id': 'Traduction'}, 'textAlign': 'center'}
+            ],
+            style_header={
+                 'backgroundColor': 'white',
+                 'fontWeight': 'bold'
+             },
+            style_as_list_view=True,
+            id='data-table',
+            columns=[{"name": i, "id": i} for i in cols],
+            data=[],
         )])
 
+    @app.server.route('/download/glossaire-<what>.pdf')
+    def download_pipeline(what):
+        if ".." in what: return f"Invalid name: {what}"
+
+        module_dir = os.path.dirname(os.path.realpath(__file__))
+        dest = f"{module_dir}/pdf/glossaire-{what}.pdf"
+
+        if not os.path.exists(dest):
+            if what == "judo-jujutsu": section_filter = ''
+            else: section_filter = what.replace(".", "/")
+
+            print_as_latext(dest, section_filter)
+
+            if not os.path.exists(dest): return f"{dest} generation failed ..."
+
+        import flask
+        return flask.send_file(dest,
+                               mimetype='application/pdf',
+                               attachment_filename=f'glossaire-{what}.pdf',
+                               as_attachment=True )
+
     @app.callback(
-        Output('data-table', 'data'),
+        [Output('data-table', 'data'),
+         Output('dl_current', 'children'), Output('dl_current', 'href')],
         [Input('name-search', "value"),
          Input('domain-dropdown', "value")])
     def update_table(names, domain):
@@ -244,21 +301,27 @@ def run_dash():
             try: names.append(names_renamed[name])
             except KeyError: pass
 
+        if domain == 'all': domain = ""
         for names_in_technique in sorted(techniques_transation):
             if names and not [name for name in names if name in names_in_technique]:
                 continue
 
             tech_name, section, tech_fr = tech_to_glossary("-".join(names_in_technique))
+
             if domain and not section.startswith(domain): continue
             dicts.append(dict(Nom=tech_name,
                               Traduction=tech_fr,
                               Domaine=section))
-        return dicts
+
+        dl = ['', ''] if domain in [None, "judo", "jujutsu", 'all'] \
+            else [domain, f"download/glossaire-{domain.replace('/', '.')}.pdf"]
+
+        return [dicts] + dl
 
     if __name__ == "__main__":
         app.run_server(debug=True)
     else:
-        return app.application
+        return app.server
 
 if __name__ == "__main__":
     parse_file("judo")
@@ -268,4 +331,6 @@ if __name__ == "__main__":
     #print_as_latext()
     run_dash()
 else:
+    module_dir = os.path.dirname(os.path.realpath(__file__))
+    parse_file(module_dir + "/judo")
     application = run_dash()
