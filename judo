@@ -118,15 +118,17 @@ sode-guruma-jime: ^^
 
 ## atemi-waza
 
-atama: !coup de tete
+atama: !tete
 uchi`-higi: coup-coude
 
 ### te-atemi
 
-oi-tsuki: direct-coup de poing
-gyaku-tsuki: inversé-^
-naname-tsuki: diagonale-^
-mawaishi-tsuki: ^^
+tsuki = zuki
+
+oi-zuki: direct-coup de poing
+gyaku-zuki: inversé-^
+naname-zuki: diagonale-^
+mawashi-tsuki: ^^
 tsuki-age: ^-vers le haut
 tsukake: !coup de poing direct
 ura-uchi`: ^^
@@ -144,9 +146,9 @@ mae-geri-kekomi: ^-^-pénétrant
 mae-geri-keage: ^-^-fouetter
 mae-hiza: ^^
 yoko-hiza: ^^
-mawaishi-geri: circulaire-^
+mawashi-geri: circulaire-^
 ushiro-geri: ^^
-ura-mawaishi-geri: ^^
+ura-mawashi-geri: ^^
 ura-ushiro-geri: ^^
 yoko-geri: ^^
 gedan-geri: bas-^
@@ -158,15 +160,14 @@ kakato-geri: talon-^
 
 ## ne-waza
 ### kantetsu-waza
-
 mune-gatame: poitrine-^
 ude-nobashi: ^-étendu
 ashi-garami: ^^
 
 #### aikido
 
-kote-gaeshi: poignet-^
-kote-mawaishi: ^^
+kote-gaeshi: avant bras-^
+kote-mawashi: ^^
 shiho-nage: en quatre points-^
 tekubi-osae: poignet-^
 kote-hineri: ^-torsion
@@ -178,7 +179,7 @@ ashi-jime: ^^
 ## blocages
 
 gedan-barai: ^^
-soto-uke: ^-blocage
+soto-uke: ^-défence
 age-uke: ^^
 
 ## autres
@@ -190,6 +191,7 @@ tai-sabaki: ^-entier
 @uchi: maison
 @tekubi: cou (kubi) de la main
 @kote: petite main
-@uke: comme tori et uke?
-@mikasuki: de lune
+@mikazuki: croissant de lune
 @uchi`: different du sens <intérieur>
+
+# www.nihongodict.com/
